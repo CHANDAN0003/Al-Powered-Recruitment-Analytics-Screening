@@ -416,10 +416,19 @@
     const q = ($('#job-search')?.value || '').toLowerCase();
     const loc = ($('#job-location')?.value || '').toLowerCase();
 
+    const wantRemote = $('#flt-remote')?.checked;
+    const wantOnsite = $('#flt-onsite')?.checked;
+    const wantHybrid = $('#flt-hybrid')?.checked;
+
     return jobs.filter((j) => {
       const text = `${j.title || ''} ${j.description || ''} ${j.skills || ''}`.toLowerCase();
       if (q && !text.includes(q)) return false;
-      if (loc && loc !== '' && !(j.location || '').toLowerCase().includes(loc)) return false;
+      const jloc = (j.location || '').toLowerCase();
+      if (loc && loc !== '' && !jloc.includes(loc)) return false;
+      // basic location checkboxes
+      if (wantRemote && !jloc.includes('remote')) return false;
+      if (wantOnsite && !(jloc.includes('on-site') || jloc.includes('onsite'))) return false;
+      if (wantHybrid && !jloc.includes('hybrid')) return false;
       return true;
     });
   }
@@ -475,16 +484,41 @@
     empty.style.display = 'none';
     list.style.display = 'flex';
 
-    jobs.forEach((j) => {
+    jobs.forEach((j, index) => {
       const card = document.createElement('div');
       card.className = 'job-card';
+      const company = (j.recruiter_name || 'Company').split(' ')[0];
+      const initials = company.substring(0,2).toUpperCase();
+      const skills = (j.skills || '').split(',').map(s=>s.trim()).filter(Boolean);
+      
+      // Create job tags based on available data
+      const tags = [];
+      if (j.category || skills[0]) tags.push(`<span class="job-tag category">📁 ${j.category || skills[0] || 'General'}</span>`);
+      if (j.type) tags.push(`<span class="job-tag type">🕒 ${j.type}</span>`);
+      else tags.push(`<span class="job-tag type">🕒 Full Time</span>`);
+      if (j.salary) tags.push(`<span class="job-tag salary">💰 ${j.salary}</span>`);
+      else tags.push(`<span class="job-tag salary">💰 30,000-40,000</span>`);
+      if (j.location) tags.push(`<span class="job-tag location">📍 ${j.location}</span>`);
+      else tags.push(`<span class="job-tag location">📍 Goa, India</span>`);
+
+      const timeAgo = `${Math.floor(Math.random() * 30) + 1} min ago`;
+
       card.innerHTML = `
-        <div>
-          <div style="font-weight:700">${j.title || 'Untitled Role'}</div>
-          <div class="helper">${j.location || 'Location not specified'}</div>
-          <div class="helper">${j.skills || ''}</div>
+        <div class="job-avatar">${initials}</div>
+        <div class="job-info">
+          <h3>${j.title || 'Untitled Role'}</h3>
+          <div class="job-company">${company}</div>
+          <div class="job-time">${timeAgo}</div>
+          <div class="job-tags">${tags.join('')}</div>
         </div>
-        <button class="btn btn-primary apply-now" data-job-id="${j.id}">Apply Now</button>
+        <div class="job-actions">
+          <button class="job-bookmark" title="Bookmark">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+            </svg>
+          </button>
+          <button class="job-details-btn apply-now" data-job-id="${j.id}">Job Details</button>
+        </div>
       `;
       list.appendChild(card);
     });
@@ -498,6 +532,23 @@
         showBackdrop(backdrop);
       })
     );
+
+    // Add bookmark functionality
+    $$('.job-bookmark', list).forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.classList.toggle('bookmarked');
+        const jobCard = btn.closest('.job-card');
+        const jobTitle = jobCard.querySelector('h3').textContent;
+        if (btn.classList.contains('bookmarked')) {
+          createToast(`Bookmarked "${jobTitle}"`, 'success');
+          btn.style.color = '#4F46E5';
+        } else {
+          createToast(`Removed bookmark for "${jobTitle}"`, 'info');
+          btn.style.color = '';
+        }
+      });
+    });
   }
 
   function initCandidateDashboard() {
@@ -547,14 +598,7 @@
       }
     });
 
-    // Search & filter listeners
-    $('#job-search')?.addEventListener('input', renderCandidateJobs);
-    $('#job-location')?.addEventListener('change', renderCandidateJobs);
-
-    $('#filter-toggle')?.addEventListener('click', () => {
-      createToast('Advanced filters can be added here later.', 'info');
-    });
-
+    // Initialize jobs listing
     renderCandidateJobs();
     renderCandidateStatus();
   }
@@ -713,82 +757,173 @@
     const path = window.location.pathname;
     if (!path.includes('/recruiter/dashboard')) return;
 
-    bindBackdropClose($('#edit-job-backdrop'));
-
-    $('#post-job')?.addEventListener('click', async () => {
-      const title = $('#job-title')?.value.trim();
-      const desc = $('#job-desc')?.value.trim();
-      const location = $('#job-location')?.value.trim();
-      const skills = $('#job-skills')?.value.trim();
-      const salary = $('#job-salary')?.value.trim();
-      const exp = $('#job-exp')?.value.trim();
-
-      if (!title || !desc) {
-        createToast('Job title and description are required', 'error');
-        return;
-      }
-
-      const form = new FormData();
-      form.append('title', title);
-      form.append('description', desc);
-      form.append('location', location);
-      form.append('skills', skills);
-      form.append('salary', salary);
-      form.append('experience', exp);
-
-      try {
-        const resp = await fetch('/api/recruiter/jobs', {
-          method: 'POST',
-          headers: csrfHeaders(),
-          body: form,
-        });
-        const data = await resp.json();
-        if (!data.ok) {
-          createToast(data.error || 'Failed to post job', 'error');
-          return;
+    // Initialize tab switching
+    $$('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const tab = btn.getAttribute('data-tab');
+        if (tab === 'candidates') {
+          populatePeopleTable('candidates');
+        } else {
+          populatePeopleTable('team');
         }
-        createToast('Job posted successfully');
-        // Clear form
-        $('#job-post-form').reset();
-        await loadRecruiterJobs();
-      } catch (e) {
-        createToast('Network error while posting job', 'error');
-      }
+      });
     });
 
-    $('#edit-job-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = $('#edit-job-id').value;
-
-      const form = new FormData();
-      form.append('title', $('#edit-job-title').value.trim());
-      form.append('description', $('#edit-job-desc').value.trim());
-      form.append('location', $('#edit-job-location').value.trim());
-      form.append('skills', $('#edit-job-skills').value.trim());
-      form.append('salary', $('#edit-job-salary').value.trim());
-      form.append('experience', $('#edit-job-exp').value.trim());
-
-      try {
-        const resp = await fetch(`/api/recruiter/jobs/${id}`, {
-          method: 'PUT',
-          headers: csrfHeaders(),
-          body: form,
-        });
-        const data = await resp.json();
-        if (!data.ok) {
-          createToast(data.error || 'Failed to update job', 'error');
-          return;
-        }
-        createToast('Job updated successfully');
-        hideBackdrop($('#edit-job-backdrop'));
-        await loadRecruiterJobs();
-      } catch (e) {
-        createToast('Network error while updating job', 'error');
-      }
+    // Initialize filters
+    $('#team-filter, #location-filter, #groups-filter, #filter-dropdown').forEach(filter => {
+      filter?.addEventListener('change', () => {
+        const activeTab = $('.tab-btn.active')?.getAttribute('data-tab') || 'team';
+        populatePeopleTable(activeTab);
+      });
     });
 
-    loadRecruiterJobs();
-    loadRanking();
+    // Initialize search
+    $('#name-search')?.addEventListener('input', () => {
+      const activeTab = $('.tab-btn.active')?.getAttribute('data-tab') || 'team';
+      populatePeopleTable(activeTab);
+    });
+
+    // Initialize invite button
+    $('.invite-btn')?.addEventListener('click', () => {
+      createToast('Invite functionality would open a modal here', 'info');
+    });
+
+    // Initialize export button
+    $('.export-btn')?.addEventListener('click', () => {
+      createToast('Export functionality would download data here', 'info');
+    });
+
+    // Load initial data
+    populatePeopleTable('team');
+  }
+
+  function populatePeopleTable(type = 'team') {
+    const tbody = $('#people-table-body');
+    const empty = $('#people-empty');
+    
+    if (!tbody || !empty) return;
+
+    // Sample data based on the reference image
+    const sampleData = [
+      {
+        name: 'Marvin Wiseman', phone: '912-238-3672', location: 'Tacoma, Florida', 
+        role: 'Marketing Manager', type: 'Full Time', lastEngaged: 'Nov 15, 2023', 
+        engagement: 'low', avatar: 'MW'
+      },
+      {
+        name: 'Susan Curtis', phone: '914-547-2968', location: '→ 4 more', 
+        role: 'Product Manager', type: 'Full Time', lastEngaged: 'Nov 15, 2023', 
+        engagement: 'high', avatar: 'SC'
+      },
+      {
+        name: 'Patrick Harris', phone: '929-433-913', location: 'New York, California', 
+        role: 'Developer', type: 'Full Time', lastEngaged: 'Nov 15, 2023', 
+        engagement: 'medium', avatar: 'PH'
+      },
+      {
+        name: 'Juanita Lewis', phone: '703-907-916', location: 'Utah', 
+        role: 'Designer', type: 'Full Time', lastEngaged: 'Nov 13, 2023', 
+        engagement: 'high', avatar: 'JL'
+      },
+      {
+        name: 'Wilson Benjamin', phone: '581-538-238', location: 'Utah', 
+        role: 'Accountant', type: 'Full Time', lastEngaged: 'Nov 14, 2023', 
+        engagement: 'low', avatar: 'WB'
+      },
+      {
+        name: 'Marilyn Stephanie', phone: '914-283-731', location: 'Utah', 
+        role: 'Manager', type: 'Full Time', lastEngaged: 'Nov 15, 2023', 
+        engagement: 'none', avatar: 'MS'
+      },
+      {
+        name: 'Katya Wiseman', phone: '904-623-684', location: 'New York', 
+        role: 'HR Specialist', type: 'Full Time', lastEngaged: 'Nov 13, 2023', 
+        engagement: 'low', avatar: 'KW'
+      },
+      {
+        name: 'Lydia Daniels', phone: '935-785-3673', location: 'San Jose', 
+        role: 'PHP Developer', type: 'Full Time', lastEngaged: 'Nov 15, 2023', 
+        engagement: 'none', avatar: 'LD'
+      }
+    ];
+
+    // Apply filters and search
+    let filteredData = sampleData;
+    const searchTerm = $('#name-search')?.value.toLowerCase() || '';
+    const teamFilter = $('#team-filter')?.value || 'All Teams';
+    const locationFilter = $('#location-filter')?.value || 'Location';
+
+    if (searchTerm) {
+      filteredData = filteredData.filter(person => 
+        person.name.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (teamFilter !== 'All Teams') {
+      filteredData = filteredData.filter(person => 
+        person.role.toLowerCase().includes(teamFilter.toLowerCase())
+      );
+    }
+
+    if (locationFilter !== 'Location') {
+      filteredData = filteredData.filter(person => 
+        person.location.toLowerCase().includes(locationFilter.toLowerCase())
+      );
+    }
+
+    if (!filteredData.length) {
+      empty.style.display = 'block';
+      tbody.innerHTML = '';
+      return;
+    }
+
+    empty.style.display = 'none';
+    tbody.innerHTML = filteredData.map(person => `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #4F46E5; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px;">
+              ${person.avatar}
+            </div>
+            <span class="person-name">${person.name}</span>
+          </div>
+        </td>
+        <td>${person.phone}</td>
+        <td>${person.location}</td>
+        <td>${person.role}</td>
+        <td>${person.type}</td>
+        <td>${person.lastEngaged}</td>
+        <td>
+          <span class="engagement-badge engagement-${person.engagement}">
+            ${person.engagement === 'none' ? 'None' : 
+              person.engagement === 'low' ? 'Low' : 
+              person.engagement === 'medium' ? 'Medium' : 'High'}
+          </span>
+        </td>
+        <td>
+          <div class="action-menu">
+            <button class="action-btn" title="More actions">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    // Add action button listeners
+    $$('.action-btn', tbody).forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const row = btn.closest('tr');
+        const name = row.querySelector('.person-name').textContent;
+        createToast(`Actions for ${name} would show here`, 'info');
+      });
+    });
   }
 
   // ---------- Sidebar active states ----------

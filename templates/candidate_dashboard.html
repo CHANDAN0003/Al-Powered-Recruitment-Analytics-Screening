@@ -1,94 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="container" style="padding-top: 40px;">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Recent Jobs Available</h1>
+    <p class="page-subtitle">Lorem Ipsum is simply dummy text of the printing</p>
+    <a href="#" class="view-all-link">View all</a>
+  </div>
 
-  <!-- Sidebar -->
-  <aside class="sidebar" aria-label="Candidate sidebar navigation">
-    <div class="sidebar-header">Candidate</div>
+  <!-- Jobs List -->
+  <div class="jobs-container">
 
-    <nav class="sidebar-nav">
-      <a class="side-item active" data-section="overview">Dashboard</a>
-      <a class="side-item" data-section="jobs">Job Openings</a>
-      <a class="side-item" data-section="applications">Applications</a>
-      <a class="side-item" data-section="profile">Profile</a>
-    </nav>
-  </aside>
+    <!-- Jobs List -->
+    <div id="jobs-list" class="jobs-list">
+      <!-- Jobs will be populated here by JavaScript -->
+    </div>
 
-  <!-- Main -->
-  <main class="dashboard-main">
-
-    <!-- Topbar: Job Search / Filters -->
-    <section id="jobs-section" class="card section-block">
-      <div class="card-title">Explore Jobs</div>
-
-      <div class="topbar-row">
-        <div class="searchbar">
-          <span class="icon">🔍</span>
-          <input id="job-search" class="input plain" placeholder="Search job title, company, skills..." />
-        </div>
-
-        <select id="job-location" class="input select">
-          <option value="">Anywhere</option>
-          <option>Remote</option>
-          <option>On-site</option>
-          <option>Hybrid</option>
-        </select>
-
-        <button id="filter-toggle" class="btn btn-ghost">Filters</button>
-      </div>
-
-      <div id="active-filters" class="pill-row"></div>
-
-      <div class="stack" id="jobs-list-wrapper">
-        <div id="jobs-empty" class="helper">No jobs available yet. Recruiters will add openings soon.</div>
-        <div id="jobs-list" class="stack"></div>
-      </div>
-    </section>
-
-    <!-- Status + Profile -->
-    <section class="grid cols-3 mt-20">
-      
-      <!-- Application Overview -->
-      <div class="card">
-        <div class="card-title">Your Application Status</div>
-        <div id="status-cards" class="grid cols-2 status-grid"></div>
-      </div>
-
-      <!-- Profile completion -->
-      <div id="profile-card" class="card profile-card">
-        <div class="profile-info">
-          <div class="card-title">Profile Completion</div>
-          <p class="helper">Increase your chances of getting shortlisted.</p>
-          <button class="btn mt-10">Complete Profile</button>
-        </div>
-
-        <div class="progress" data-progress="72">
-          <span>72%</span>
-        </div>
-      </div>
-
-      <!-- Applications Placeholder -->
-      <div id="applications-card" class="card">
-        <div class="card-title">Recent Applications</div>
-        <div class="helper">Your recent job applications will appear here.</div>
-      </div>
-
-    </section>
-
-    <!-- Chat assistant -->
-    <section class="card mt-20">
-      <div class="card-title">Chat Assistant</div>
-
-      <div id="chat_box" class="chat-box"></div>
-
-      <div class="chat-input-row">
-        <input id="chat_prompt" class="input" placeholder="Ask about jobs, application process..." />
-        <button class="btn" onclick="chatbotAsk()">Ask</button>
-      </div>
-    </section>
-
-  </main>
+    <!-- Empty State -->
+    <div id="jobs-empty" class="empty-state">
+      <div class="empty-icon">💼</div>
+      <h3>No Jobs Available</h3>
+      <p>There are currently no job listings available. Please check back later or contact recruiters to post new opportunities.</p>
+    </div>
+  </div>
 </div>
 
 <!-- APPLY MODAL -->

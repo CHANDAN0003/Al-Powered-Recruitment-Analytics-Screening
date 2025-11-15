@@ -1,81 +1,99 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-content">
-      <h1 class="hero-title">Find great talent — faster</h1>
-      <p class="hero-sub">Secure OTP login • AI resume scoring • Recruiter analytics • Candidate matching</p>
+<section class="hero-section">
+  <div class="hero-image-container">
+    <img src="https://planergy.com/wp-content/uploads/2018/12/45-Featured-What-is-Supplier-Relationship-Management.jpg" 
+         alt="Supplier Relationship Management" 
+         class="hero-image" />
+    <div class="image-overlay"></div>
+  </div>
+  
+  <div class="hero-content">
+    <div class="content-box">
+      <h1 class="hero-title">Made for people. Found with AI recruiting.</h1>
+      <p class="hero-description">Shorten time-to-hire, reduce cost, and build a durable talent strategy with OTP-secured sign-in, AI resume scoring, and modern recruiter tools.</p>
 
-      <div class="hero-cta">
-        <button id="btn-recruiter" class="btn btn-primary" data-role="recruiter" aria-label="I am a recruiter">I'm a Recruiter</button>
-        <button id="btn-candidate" class="btn btn-secondary" data-role="candidate" aria-label="I am a candidate">I'm a Candidate</button>
-        <button id="open-auth" class="btn btn-ghost" aria-label="Sign in or sign up">Sign In / Sign Up</button>
+      <div class="hero-buttons">
+        <button id="btn-recruiter" class="btn btn-primary" data-role="recruiter">I'm a Recruiter</button>
+        <button id="btn-candidate" class="btn btn-secondary" data-role="candidate">I'm a Candidate</button>
       </div>
-
-      <p class="hero-note">No dummy data — add jobs and applications in real time. UI-only flows for now.</p>
     </div>
+  </div>
+</section>
 
-    <div class="hero-visual" aria-hidden="true">
-      <!-- gentle illustration that matches the pastel theme -->
-      <svg width="420" height="300" viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" role="img">
-        <defs>
-          <linearGradient id="lg1" x1="0" x2="1"><stop offset="0" stop-color="#e0f2fe"/><stop offset="1" stop-color="#f5d0fe"/></linearGradient>
-        </defs>
-        <rect x="10" y="30" width="380" height="220" rx="20" fill="url(#lg1)"/>
-        <circle cx="120" cy="120" r="36" fill="#fff" opacity="0.9"/>
-        <rect x="180" y="90" width="160" height="28" rx="8" fill="#fff" opacity="0.9"/>
-        <rect x="180" y="130" width="120" height="18" rx="6" fill="#fff" opacity="0.9"/>
-      </svg>
-    </div>
+<!-- Trusted logos -->
+<section class="card" style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center">
+  <span class="tag">FLUITRONICS</span>
+  <span class="tag">ALPS ALPINE</span>
+  <span class="tag">FENIX</span>
+  <span class="tag">Stadtwerke</span>
+  <span class="tag">Webesan</span>
+  <span class="tag">More…</span>
+  <span class="helper">Logos for illustration only</span>
+  </section>
+
+<!-- Feature cards -->
+<section class="grid cols-3 mt-20">
+  <div class="card">
+    <div class="card-title">Secure OTP Login</div>
+    <p class="helper">Email + OTP with CSRF protection. No passwords saved in plain text.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">AI Resume Scoring</div>
+    <p class="helper">TF‑IDF matching for fast suitability hints. Upgradeable to embeddings.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Recruiter Dashboards</div>
+    <p class="helper">Post roles, view applications, and rank candidates in one place.</p>
   </div>
 </section>
 
 <!-- AUTH MODAL (Sign In / Sign Up / OTP) -->
 <div id="auth-backdrop" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="modal" role="document" aria-labelledby="auth-title">
+
+    <!-- HEADER -->
     <div class="modal-head">
-      <div class="modal-tabs" role="tablist" aria-label="Authentication panels">
+      <div class="modal-tabs" role="tablist">
         <button id="tab-in" class="tab active" role="tab" aria-selected="true">Sign In</button>
         <button id="tab-up" class="tab" role="tab" aria-selected="false">Sign Up</button>
       </div>
-      <div id="auth-title" style="font-weight:700">Welcome back</div>
+      <div id="auth-title" class="modal-title">Welcome</div>
     </div>
 
+    <!-- BODY -->
     <div class="modal-body">
-      <div class="modal-ill" aria-hidden="true">
-        <!-- small illustration -->
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs>
-          <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#93c5fd"/><stop offset="1" stop-color="#f0abfc"/></linearGradient>
-        </defs>
-        <rect x="20" y="40" rx="14" ry="14" width="160" height="110" fill="url(#g)"/>
-        </svg>
-        <div class="helper">Secure OTP sign in • No backend connected (UI only)</div>
-      </div>
 
       <div class="modal-form">
+
         <!-- SIGN IN PANEL -->
         <div id="panel-in" class="auth-panel" role="tabpanel" aria-hidden="false">
-          <div class="role-toggle" aria-label="Choose role for authentication">
+
+          <!-- ROLE SWITCH -->
+          <div class="role-switch">
             <button class="chip active" data-role="candidate" aria-pressed="true">Candidate</button>
             <button class="chip" data-role="recruiter" aria-pressed="false">Recruiter</button>
           </div>
 
+          <!-- INPUTS -->
           <label class="sr-only" for="login-email">Email</label>
-          <input id="login-email" class="input" type="email" placeholder="Email address" autocomplete="email" />
+          <input id="login-email" class="input" type="email" placeholder="Email address" autocomplete="email"/>
 
           <label class="sr-only" for="login-pass">Password</label>
-          <input id="login-pass" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+          <input id="login-pass" class="input" type="password" placeholder="Password" autocomplete="current-password"/>
 
-          <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
-            <button id="send-otp" class="btn">Send OTP</button>
-            <button id="sign-in-password" class="btn btn-ghost">Sign in with password</button>
+          <!-- BUTTONS -->
+          <div class="btn-row">
+            <button id="send-otp" class="secondary-btn">Send OTP</button>
+            <button id="sign-in-password" class="primary-btn">Sign in</button>
           </div>
 
-          <!-- OTP area (hidden until Send OTP) -->
-          <div id="otp-wrap" class="otp-wrap" style="display:none">
-            <div class="helper" style="margin-bottom:6px">Enter the 6-digit code</div>
-            <div class="otp-inputs" id="otp-inputs" aria-label="OTP input">
+          <!-- OTP SECTION -->
+          <div id="otp-wrap" class="otp-wrap" style="display:none; margin-top:18px;">
+            <div class="helper">Enter the 6-digit code</div>
+
+            <div class="otp-inputs" id="otp-inputs">
               <input inputmode="numeric" maxlength="1" />
               <input inputmode="numeric" maxlength="1" />
               <input inputmode="numeric" maxlength="1" />
@@ -83,20 +101,25 @@
               <input inputmode="numeric" maxlength="1" />
               <input inputmode="numeric" maxlength="1" />
             </div>
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <button id="verify-otp" class="btn">Verify OTP</button>
-              <button id="resend-otp" class="btn btn-ghost">Resend</button>
+
+            <div class="btn-row" style="margin-top:10px;">
+              <button id="verify-otp" class="primary-btn">Verify OTP</button>
+              <button id="resend-otp" class="secondary-btn">Resend</button>
             </div>
           </div>
 
-          <div class="helper" style="margin-top:12px">Don't have an account? <button id="switch-to-signup" class="btn btn-link">Create one</button></div>
+          <div class="modal-foot">
+            Don't have an account?
+            <button id="switch-to-signup" class="btn-link">Create one</button>
+          </div>
         </div>
 
         <!-- SIGN UP PANEL -->
         <div id="panel-up" class="auth-panel" role="tabpanel" aria-hidden="true" style="display:none">
-          <div class="role-toggle" aria-label="Choose role for signup">
-            <button class="chip active" data-role="candidate" aria-pressed="true">Candidate</button>
-            <button class="chip" data-role="recruiter" aria-pressed="false">Recruiter</button>
+
+          <div class="role-switch">
+            <button class="chip active" data-role="candidate">Candidate</button>
+            <button class="chip" data-role="recruiter">Recruiter</button>
           </div>
 
           <input id="su-name" class="input" placeholder="Full name" />
@@ -104,12 +127,15 @@
           <input id="su-pass" class="input" type="password" placeholder="Choose a password" />
           <input id="su-pass2" class="input" type="password" placeholder="Confirm password" />
 
-          <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
-            <button id="create-account" class="btn">Create Account</button>
+          <button id="create-account" class="primary-btn" style="margin-top:10px;">Create Account</button>
+
+          <div class="modal-foot">
+            Already registered?
+            <button id="switch-to-signin" class="btn-link">Sign in</button>
           </div>
 
-          <div class="helper" style="margin-top:12px">Already registered? <button id="switch-to-signin" class="btn btn-link">Sign in</button></div>
         </div>
+
       </div>
     </div>
   </div>

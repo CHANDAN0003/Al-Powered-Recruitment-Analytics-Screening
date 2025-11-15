@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{{ title or "AI Recruitment Portal" }}</title>
-  <meta name="description" content="AI Recruitment Portal — OTP login, candidate & recruiter dashboards, ML scoring" />
+  <title>{{ title or "JobsPlanet - Find Your Dream Job" }}</title>
+  <meta name="description" content="Find your dream job with your interest and skills - JobsPlanet recruitment platform" />
   <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}" />
 
-  <!-- Primary styles (portal.css will contain the system) -->
+  <!-- Primary styles -->
   <link rel="stylesheet" href="{{ url_for('static', path='portal.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
 
@@ -23,71 +23,82 @@
 
   {% block head_extra %}{% endblock %}
   <style>
-    /* Small safety fallback for environments without portal.css loaded yet */
-    :root{--primary:#2563eb;--bg1:#f7fbff;--card:#fff;--text:#1f2937}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    /* JobsPlanet theme */
+    :root{--primary:#4F46E5;--bg1:#F8FAFC;--card:#fff;--text:#1E293B;--text-muted:#64748B;}
+    html,body{height:100%;margin:0;font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;background:#F8FAFC;}
+    .container{max-width:1200px;margin:0 auto;padding:0 20px;}
   </style>
 </head>
 <body>
   <!-- Top navigation -->
-  <header class="nav" role="banner">
-    <div class="nav-inner container">
-      <a href="{{ url_for('landing') }}" class="brand" aria-label="AI Recruitment Portal">
-        <img src="{{ url_for('static', path='logo.svg') }}" alt="" class="brand-logo" />
-        <span class="brand-text">AI Recruitment</span>
-      </a>
+  <header class="jobsplanet-nav" role="banner">
+    <div class="container">
+      <div class="nav-content">
+        <a href="{{ url_for('landing') }}" class="brand">
+          <span class="brand-jobs">Jobs</span><span class="brand-planet">Planet</span>
+        </a>
 
-      <nav class="nav-links" role="navigation" aria-label="Main">
-        <a href="{{ url_for('landing') }}" class="nav-link">Home</a>
-        <a href="{{ url_for('recruiter_dashboard') }}" class="nav-link">Recruiter</a>
-        <a href="{{ url_for('candidate_dashboard') }}" class="nav-link">Candidate</a>
-      </nav>
+        <nav class="main-nav" role="navigation" aria-label="Main">
+          <a href="{{ url_for('landing') }}" class="nav-item">Home</a>
+          <a href="#" class="nav-item">How It Works</a>
+          <a href="#" class="nav-item">About Us</a>
+          <a href="#" class="nav-item">Contact Us</a>
+        </nav>
 
-      <div class="nav-actions">
-        <button id="theme-toggle" class="btn btn-ghost" aria-pressed="false" title="Toggle theme">🌗</button>
-
-        {% if user %}
-          <div class="user-menu" aria-hidden="false">
-            <span class="user-name">Hi, {{ user.name }}</span>
-            <a href="{{ url_for('logout') }}" class="link-muted">Logout</a>
-          </div>
-        {% else %}
-          <div class="auth-actions">
-            <button id="open-auth" class="btn">Sign in / Sign up</button>
-          </div>
-        {% endif %}
+        <div class="auth-buttons">
+          {% if user %}
+            <span class="user-greeting">Hi, {{ user.name }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+          {% else %}
+            <button id="open-auth" class="btn-login">Log In</button>
+            <button id="btn-candidate" class="btn-signup">Sign Up</button>
+          {% endif %}
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Flash -->
   {% if flash %}
-    <div class="flash container" role="status">{{ flash }}</div>
+    <div class="flash-message">{{ flash }}</div>
   {% endif %}
 
   <!-- Main content area -->
-  <main class="container site-main" role="main">
+  <main class="main-content">
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Shared UI containers (modal root, toast root). JS mounts/populates here -->
+  <!-- Shared UI containers -->
   <div id="ui-roots">
-    <!-- Modals are appended here by portal.js -->
     <div id="modal-root" aria-live="polite"></div>
-
-    <!-- Toast container -->
     <div id="toast-root" aria-live="assertive" aria-atomic="true"></div>
   </div>
 
-  <!-- Footer (simple) -->
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div class="footer-left">
-        <small>© {{ now.year if now is defined else "2025" }} AI Recruitment Portal</small>
+  <!-- Footer -->
+  <footer class="jobsplanet-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="brand-jobs">Jobs</span><span class="brand-planet">Planet</span>
+          <p>Find your dream job with your interest and skills</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Careers</a>
+            <a href="#">Contact</a>
+          </div>
+          <div class="footer-col">
+            <h4>Support</h4>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+          </div>
+        </div>
       </div>
-      <div class="footer-right">
-        <a class="link-muted" href="/privacy">Privacy</a>
-        <a class="link-muted" href="/terms">Terms</a>
+      <div class="footer-bottom">
+        <p>© {{ now.year if now is defined else "2025" }} JobsPlanet. All rights reserved.</p>
       </div>
     </div>
   </footer>

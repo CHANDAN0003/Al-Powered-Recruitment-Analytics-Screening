@@ -1,79 +1,141 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-layout">
-
-  <!-- Sidebar -->
-  <aside class="sidebar" aria-label="Recruiter sidebar navigation">
-    <div class="sidebar-header">Recruiter</div>
-
-    <nav class="sidebar-nav">
-      <a class="side-item active" data-section="overview">Dashboard</a>
-      <a class="side-item" data-section="post">Post a Job</a>
-      <a class="side-item" data-section="ranking">ML Ranking</a>
-      <a class="side-item" data-section="jobs">My Jobs</a>
-    </nav>
-  </aside>
-
-  <!-- Main Area -->
-  <main class="dashboard-main">
-
-    <!-- POST JOB SECTION -->
-    <section id="post-section" class="card section-block">
-      <div class="card-title">Create a New Job Opening</div>
-      <p class="helper">Add a new job and it will appear immediately on the candidate portal.</p>
-
-      <form id="job-post-form" class="job-post-form">
-
-        <div class="grid cols-2">
-          <input id="job-title" class="input" placeholder="Job Title" />
-          <input id="job-location" class="input" placeholder="Location (Remote / On-site / Hybrid)" />
-        </div>
-
-        <textarea id="job-desc" class="input" placeholder="Job Description"></textarea>
-        <input id="job-skills" class="input" placeholder="Required Skills (comma-separated)" />
-
-        <div class="grid cols-2">
-          <input id="job-salary" class="input" placeholder="Salary Range (e.g., 8 LPA – 12 LPA)" />
-          <input id="job-exp" class="input" placeholder="Required Experience (years)" />
-        </div>
-
-        <button id="post-job" type="button" class="btn fullwidth mt-10">Post Job</button>
-      </form>
-    </section>
-
-    <!-- ML RANKING SECTION -->
-    <section id="ranking-section" class="card section-block mt-20">
-      <div class="card-title">AI Candidate Ranking</div>
-      <p class="helper">Candidates will appear after your ML model evaluates applications.</p>
-
-      <div id="ranked-candidates-empty" class="helper">
-        No candidates ranked yet.
+<div class="people-dashboard">
+  
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1 class="page-title">People</h1>
+      <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="team">Team Members</button>
+        <button class="tab-btn" data-tab="candidates">Candidates</button>
       </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary invite-btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Invite Team Member
+      </button>
+    </div>
+  </div>
 
-      <table id="ranked-candidates-table" class="table" style="display:none">
-        <thead>
-          <tr>
-            <th>Candidate</th>
-            <th>Score</th>
-            <th style="width:130px">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="ranked-candidates-body"></tbody>
-      </table>
-    </section>
+  <!-- Overview Stats -->
+  <div class="overview-section">
+    <h2 class="section-title">Overview</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">16</div>
+        <div class="stat-label">High Engagement</div>
+        <div class="stat-trend">View →</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">42</div>
+        <div class="stat-label">Low Engagement</div>
+        <div class="stat-trend">View →</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">33</div>
+        <div class="stat-label">Unassigned</div>
+        <div class="stat-trend">View →</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">150</div>
+        <div class="stat-label">Trusted Members</div>
+        <div class="stat-trend">View →</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- MY JOBS LIST -->
-    <section id="jobs-section" class="card section-block mt-20">
-      <div class="card-title">My Job Listings</div>
-      <p class="helper">Your posted jobs will appear here. Candidates can apply in real time.</p>
+  <!-- Filters and Actions -->
+  <div class="table-controls">
+    <div class="filters-left">
+      <select class="filter-select" id="team-filter">
+        <option>All Teams</option>
+        <option>Engineering</option>
+        <option>Marketing</option>
+        <option>Sales</option>
+      </select>
+      <select class="filter-select" id="location-filter">
+        <option>Location</option>
+        <option>Remote</option>
+        <option>New York</option>
+        <option>California</option>
+      </select>
+      <select class="filter-select" id="groups-filter">
+        <option>All Groups</option>
+        <option>Managers</option>
+        <option>Developers</option>
+      </select>
+      <select class="filter-select" id="filter-dropdown">
+        <option>All Filters</option>
+        <option>Active</option>
+        <option>Inactive</option>
+      </select>
+      <button class="filter-btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        Filter
+      </button>
+    </div>
+    <div class="filters-right">
+      <button class="export-btn">Export</button>
+      <div class="search-box">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>
+        <input type="text" placeholder="Search by name" id="name-search" />
+      </div>
+    </div>
+  </div>
 
-      <div id="jobs-empty" class="helper">You haven't posted any jobs yet.</div>
+  <!-- People Table -->
+  <div class="people-table-container">
+    <table class="people-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone Number</th>
+          <th>Location</th>
+          <th>Role</th>
+          <th>Type</th>
+          <th>Last Engaged On</th>
+          <th>Engagement Rate</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="people-table-body">
+        <!-- Sample data will be populated by JavaScript -->
+      </tbody>
+    </table>
+    
+    <!-- Empty State -->
+    <div id="people-empty" class="empty-state" style="display: none;">
+      <svg width="48" height="48" fill="#94A3B8" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      <h3>No team members found</h3>
+      <p>Invite team members to get started with collaboration.</p>
+    </div>
 
-      <div id="jobs-list" class="stack"></div>
-    </section>
+    <!-- Pagination -->
+    <div class="pagination">
+      <div class="pagination-info">1-10 of 150</div>
+      <div class="pagination-controls">
+        <button class="page-btn" disabled>‹</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">15</button>
+        <button class="page-btn">›</button>
+      </div>
+    </div>
+  </div>
 
-  </main>
 </div>
 
 <!-- EDIT JOB MODAL -->
