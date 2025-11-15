@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" aria-label="Candidate sidebar navigation">
+    <div class="sidebar-header">Candidate</div>
+
+    <nav class="sidebar-nav">
+      <a class="side-item active" data-section="overview">Dashboard</a>
+      <a class="side-item" data-section="jobs">Job Openings</a>
+      <a class="side-item" data-section="applications">Applications</a>
+      <a class="side-item" data-section="profile">Profile</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="dashboard-main">
+
+    <!-- Topbar: Job Search / Filters -->
+    <section id="jobs-section" class="card section-block">
+      <div class="card-title">Explore Jobs</div>
+
+      <div class="topbar-row">
+        <div class="searchbar">
+          <span class="icon">🔍</span>
+          <input id="job-search" class="input plain" placeholder="Search job title, company, skills..." />
+        </div>
+
+        <select id="job-location" class="input select">
+          <option value="">Anywhere</option>
+          <option>Remote</option>
+          <option>On-site</option>
+          <option>Hybrid</option>
+        </select>
+
+        <button id="filter-toggle" class="btn btn-ghost">Filters</button>
+      </div>
+
+      <div id="active-filters" class="pill-row"></div>
+
+      <div class="stack" id="jobs-list-wrapper">
+        <div id="jobs-empty" class="helper">No jobs available yet. Recruiters will add openings soon.</div>
+        <div id="jobs-list" class="stack"></div>
+      </div>
+    </section>
+
+    <!-- Status + Profile -->
+    <section class="grid cols-3 mt-20">
+      
+      <!-- Application Overview -->
+      <div class="card">
+        <div class="card-title">Your Application Status</div>
+        <div id="status-cards" class="grid cols-2 status-grid"></div>
+      </div>
+
+      <!-- Profile completion -->
+      <div id="profile-card" class="card profile-card">
+        <div class="profile-info">
+          <div class="card-title">Profile Completion</div>
+          <p class="helper">Increase your chances of getting shortlisted.</p>
+          <button class="btn mt-10">Complete Profile</button>
+        </div>
+
+        <div class="progress" data-progress="72">
+          <span>72%</span>
+        </div>
+      </div>
+
+      <!-- Applications Placeholder -->
+      <div id="applications-card" class="card">
+        <div class="card-title">Recent Applications</div>
+        <div class="helper">Your recent job applications will appear here.</div>
+      </div>
+
+    </section>
+
+    <!-- Chat assistant -->
+    <section class="card mt-20">
+      <div class="card-title">Chat Assistant</div>
+
+      <div id="chat_box" class="chat-box"></div>
+
+      <div class="chat-input-row">
+        <input id="chat_prompt" class="input" placeholder="Ask about jobs, application process..." />
+        <button class="btn" onclick="chatbotAsk()">Ask</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- APPLY MODAL -->
+<div id="apply-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal small-modal">
+    <div class="modal-head">
+      <div class="modal-title">Apply for Job</div>
+    </div>
+
+    <form id="apply-form" class="apply-form">
+      <input type="hidden" id="apply-job-id" />
+
+      <div class="apply-row">
+        <input id="apply-name" class="input" placeholder="Full Name" />
+        <input id="apply-email" class="input" type="email" placeholder="Email Address" />
+      </div>
+
+      <div class="apply-row">
+        <input id="apply-skills" class="input" placeholder="Top Skills (comma-separated)" />
+        <input id="apply-exp" class="input" placeholder="Experience (years)" />
+      </div>
+
+      <div class="apply-row">
+        <input id="apply-salary" class="input" placeholder="Expected Salary (INR)" />
+        <input id="apply-resume" class="input" type="file" accept=".pdf,.doc,.docx" />
+      </div>
+
+      <button id="submit-application" type="submit" class="btn fullwidth mt-10">Submit Application</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

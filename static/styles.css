@@ -1,0 +1,12 @@
+body { 
+	font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
+	background: linear-gradient(180deg, #f7fbff 0%, #f4f7fb 60%, #eef2f7 100%);
+	color: #1f2937;
+}
+.gradio-container { max-width: 1200px !important; margin: 0 auto !important; }
+section { border-radius: 12px !important; }
+button { border-radius: 10px !important; padding: 10px 16px !important; transition: all .15s ease-in-out !important; }
+button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(2, 132, 199, 0.15); }
+textarea, input, select { border-radius: 10px !important; }
+/* Custom headings */
+.markdown-body h2 { color: #2163a5; }

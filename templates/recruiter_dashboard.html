@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" aria-label="Recruiter sidebar navigation">
+    <div class="sidebar-header">Recruiter</div>
+
+    <nav class="sidebar-nav">
+      <a class="side-item active" data-section="overview">Dashboard</a>
+      <a class="side-item" data-section="post">Post a Job</a>
+      <a class="side-item" data-section="ranking">ML Ranking</a>
+      <a class="side-item" data-section="jobs">My Jobs</a>
+    </nav>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="dashboard-main">
+
+    <!-- POST JOB SECTION -->
+    <section id="post-section" class="card section-block">
+      <div class="card-title">Create a New Job Opening</div>
+      <p class="helper">Add a new job and it will appear immediately on the candidate portal.</p>
+
+      <form id="job-post-form" class="job-post-form">
+
+        <div class="grid cols-2">
+          <input id="job-title" class="input" placeholder="Job Title" />
+          <input id="job-location" class="input" placeholder="Location (Remote / On-site / Hybrid)" />
+        </div>
+
+        <textarea id="job-desc" class="input" placeholder="Job Description"></textarea>
+        <input id="job-skills" class="input" placeholder="Required Skills (comma-separated)" />
+
+        <div class="grid cols-2">
+          <input id="job-salary" class="input" placeholder="Salary Range (e.g., 8 LPA – 12 LPA)" />
+          <input id="job-exp" class="input" placeholder="Required Experience (years)" />
+        </div>
+
+        <button id="post-job" type="button" class="btn fullwidth mt-10">Post Job</button>
+      </form>
+    </section>
+
+    <!-- ML RANKING SECTION -->
+    <section id="ranking-section" class="card section-block mt-20">
+      <div class="card-title">AI Candidate Ranking</div>
+      <p class="helper">Candidates will appear after your ML model evaluates applications.</p>
+
+      <div id="ranked-candidates-empty" class="helper">
+        No candidates ranked yet.
+      </div>
+
+      <table id="ranked-candidates-table" class="table" style="display:none">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Score</th>
+            <th style="width:130px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ranked-candidates-body"></tbody>
+      </table>
+    </section>
+
+    <!-- MY JOBS LIST -->
+    <section id="jobs-section" class="card section-block mt-20">
+      <div class="card-title">My Job Listings</div>
+      <p class="helper">Your posted jobs will appear here. Candidates can apply in real time.</p>
+
+      <div id="jobs-empty" class="helper">You haven't posted any jobs yet.</div>
+
+      <div id="jobs-list" class="stack"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- EDIT JOB MODAL -->
+<div id="edit-job-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal medium-modal">
+    <div class="modal-head">
+      <div class="modal-title">Edit Job</div>
+    </div>
+
+    <form id="edit-job-form" class="edit-job-form">
+      <input type="hidden" id="edit-job-id" />
+
+      <div class="grid cols-2">
+        <input id="edit-job-title" class="input" placeholder="Job Title" />
+        <input id="edit-job-location" class="input" placeholder="Location" />
+      </div>
+
+      <textarea id="edit-job-desc" class="input" placeholder="Job Description"></textarea>
+
+      <input id="edit-job-skills" class="input" placeholder="Required Skills (comma-separated)" />
+
+      <div class="grid cols-2">
+        <input id="edit-job-salary" class="input" placeholder="Salary Range" />
+        <input id="edit-job-exp" class="input" placeholder="Required Experience" />
+      </div>
+
+      <button id="save-job-edits" type="submit" class="btn fullwidth mt-10">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
