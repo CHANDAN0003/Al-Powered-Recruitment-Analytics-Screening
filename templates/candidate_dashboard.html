@@ -5,7 +5,6 @@
   <!-- Page Header -->
   <div class="page-header">
     <h1 class="page-title">Recent Jobs Available</h1>
-    <p class="page-subtitle">Lorem Ipsum is simply dummy text of the printing</p>
     <a href="#" class="view-all-link">View all</a>
   </div>
 
@@ -28,31 +27,74 @@
 
 <!-- APPLY MODAL -->
 <div id="apply-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
-  <div class="modal small-modal">
+  <div class="modal medium-modal">
     <div class="modal-head">
       <div class="modal-title">Apply for Job</div>
+      <button class="modal-close" id="close-apply-modal">×</button>
     </div>
+    <div class="modal-body">
+      <form id="apply-form" class="apply-form">
+        <input type="hidden" id="apply-job-id" />
 
-    <form id="apply-form" class="apply-form">
-      <input type="hidden" id="apply-job-id" />
+        <div class="job-info" id="job-info-display">
+          <h4 id="apply-job-title">Job Title</h4>
+          <p id="apply-company-name">Company Name</p>
+        </div>
 
-      <div class="apply-row">
-        <input id="apply-name" class="input" placeholder="Full Name" />
-        <input id="apply-email" class="input" type="email" placeholder="Email Address" />
-      </div>
+        <div class="form-group">
+          <label for="apply-name">Full Name *</label>
+          <input id="apply-name" class="input" placeholder="Enter your full name" required />
+        </div>
 
-      <div class="apply-row">
-        <input id="apply-skills" class="input" placeholder="Top Skills (comma-separated)" />
-        <input id="apply-exp" class="input" placeholder="Experience (years)" />
-      </div>
+        <div class="form-group">
+          <label for="apply-email">Email *</label>
+          <input id="apply-email" class="input" type="email" placeholder="Enter your email" required />
+        </div>
 
-      <div class="apply-row">
-        <input id="apply-salary" class="input" placeholder="Expected Salary (INR)" />
-        <input id="apply-resume" class="input" type="file" accept=".pdf,.doc,.docx" />
-      </div>
+        <div class="form-group">
+          <label for="apply-phone">Phone Number</label>
+          <input id="apply-phone" class="input" placeholder="Enter your phone number" />
+        </div>
 
-      <button id="submit-application" type="submit" class="btn fullwidth mt-10">Submit Application</button>
-    </form>
+        <div class="form-group">
+          <label for="apply-exp">Years of Experience</label>
+          <select id="apply-exp" class="input">
+            <option value="">Select experience</option>
+            <option value="0-1">0-1 years</option>
+            <option value="1-3">1-3 years</option>
+            <option value="3-5">3-5 years</option>
+            <option value="5-10">5-10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="apply-skills">Top Skills</label>
+          <input id="apply-skills" class="input" placeholder="JavaScript, Python, React (comma-separated)" />
+        </div>
+
+        <div class="form-group">
+          <label for="apply-salary">Expected Salary</label>
+          <input id="apply-salary" class="input" placeholder="e.g., $50,000 - $70,000" />
+        </div>
+
+        <div class="form-group">
+          <label for="apply-resume">Upload Resume *</label>
+          <input id="apply-resume" class="input" type="file" accept=".pdf,.doc,.docx" required />
+          <small class="file-help">Accepted formats: PDF, DOC, DOCX (Max 5MB)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="cover-letter">Cover Letter (Optional)</label>
+          <textarea id="cover-letter" class="input textarea" rows="4" placeholder="Tell us why you're interested in this position..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="cancel-application">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submit-application">Submit Application</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 

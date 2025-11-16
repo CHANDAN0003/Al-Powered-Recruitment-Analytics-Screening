@@ -74,6 +74,98 @@
     <div id="toast-root" aria-live="assertive" aria-atomic="true"></div>
   </div>
 
+  <!-- AUTH MODAL (Sign In / Sign Up / OTP) -->
+  <div id="auth-backdrop" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal" role="document" aria-labelledby="auth-title">
+
+      <!-- HEADER -->
+      <div class="modal-head">
+        <div class="modal-tabs" role="tablist">
+          <button id="tab-in" class="tab active" role="tab" aria-selected="true">Sign In</button>
+          <button id="tab-up" class="tab" role="tab" aria-selected="false">Sign Up</button>
+        </div>
+        <div id="auth-title" class="modal-title">Welcome to JobsPlanet</div>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body">
+
+        <div class="modal-form">
+
+          <!-- SIGN IN PANEL -->
+          <div id="panel-in" class="auth-panel" role="tabpanel" aria-hidden="false">
+
+            <!-- ROLE SWITCH -->
+            <div class="role-switch">
+              <button class="chip active" data-role="candidate" aria-pressed="true">Candidate</button>
+              <button class="chip" data-role="recruiter" aria-pressed="false">Recruiter</button>
+            </div>
+
+            <!-- INPUTS -->
+            <label class="sr-only" for="login-email">Email</label>
+            <input id="login-email" class="input" type="email" placeholder="Email address" autocomplete="email"/>
+
+            <label class="sr-only" for="login-pass">Password</label>
+            <input id="login-pass" class="input" type="password" placeholder="Password" autocomplete="current-password"/>
+
+            <!-- BUTTONS -->
+            <div class="btn-row">
+              <button id="send-otp" class="secondary-btn">Send OTP</button>
+              <button id="sign-in-password" class="primary-btn">Sign in</button>
+            </div>
+
+            <!-- OTP SECTION -->
+            <div id="otp-wrap" class="otp-wrap" style="display:none; margin-top:18px;">
+              <div class="helper">Enter the 6-digit code sent to your email</div>
+
+              <div class="otp-inputs" id="otp-inputs">
+                <input inputmode="numeric" maxlength="1" />
+                <input inputmode="numeric" maxlength="1" />
+                <input inputmode="numeric" maxlength="1" />
+                <input inputmode="numeric" maxlength="1" />
+                <input inputmode="numeric" maxlength="1" />
+                <input inputmode="numeric" maxlength="1" />
+              </div>
+
+              <div class="btn-row" style="margin-top:10px;">
+                <button id="verify-otp" class="primary-btn">Verify OTP</button>
+                <button id="resend-otp" class="secondary-btn">Resend</button>
+              </div>
+            </div>
+
+            <div class="modal-foot">
+              Don't have an account?
+              <button id="switch-to-signup" class="btn-link">Create one</button>
+            </div>
+          </div>
+
+          <!-- SIGN UP PANEL -->
+          <div id="panel-up" class="auth-panel" role="tabpanel" aria-hidden="true" style="display:none">
+
+            <div class="role-switch">
+              <button class="chip active" data-role="candidate">Candidate</button>
+              <button class="chip" data-role="recruiter">Recruiter</button>
+            </div>
+
+            <input id="su-name" class="input" placeholder="Full name" />
+            <input id="su-email" class="input" type="email" placeholder="Email address" />
+            <input id="su-pass" class="input" type="password" placeholder="Choose a password" />
+            <input id="su-pass2" class="input" type="password" placeholder="Confirm password" />
+
+            <button id="create-account" class="primary-btn" style="margin-top:10px;">Create Account</button>
+
+            <div class="modal-foot">
+              Already registered?
+              <button id="switch-to-signin" class="btn-link">Sign in</button>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="jobsplanet-footer">
     <div class="container">

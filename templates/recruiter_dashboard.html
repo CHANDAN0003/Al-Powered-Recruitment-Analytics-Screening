@@ -1,169 +1,125 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="people-dashboard">
-  
-  <!-- Header Section -->
+
+<!-- ============ RECRUITER DASHBOARD ============ -->
+<div class="recruiter-dashboard">
+
+  <!-- Header -->
   <div class="dashboard-header">
     <div class="header-left">
-      <h1 class="page-title">People</h1>
+      <h1 class="page-title">Recruiter Dashboard</h1>
+
       <div class="tab-navigation">
-        <button class="tab-btn active" data-tab="team">Team Members</button>
-        <button class="tab-btn" data-tab="candidates">Candidates</button>
+        <button class="tab-btn active" data-tab="jobs">My Jobs</button>
+        <button class="tab-btn" data-tab="applicants">Applications</button>
+        <button class="tab-btn" data-tab="post">Post New Job</button>
       </div>
     </div>
+
     <div class="header-right">
-      <button class="btn btn-primary invite-btn">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
-          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-        </svg>
-        Invite Team Member
+      <button class="btn btn-primary" id="quick-post-job">
+        + Quick Post Job
       </button>
     </div>
   </div>
 
-  <!-- Overview Stats -->
+  <!-- Overview -->
   <div class="overview-section">
     <h2 class="section-title">Overview</h2>
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value">16</div>
-        <div class="stat-label">High Engagement</div>
-        <div class="stat-trend">View →</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">42</div>
-        <div class="stat-label">Low Engagement</div>
-        <div class="stat-trend">View →</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">33</div>
-        <div class="stat-label">Unassigned</div>
-        <div class="stat-trend">View →</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">150</div>
-        <div class="stat-label">Trusted Members</div>
-        <div class="stat-trend">View →</div>
-      </div>
+      <div class="stat-card"><div id="active-jobs-count">0</div><p>Active Jobs</p></div>
+      <div class="stat-card"><div id="total-applications-count">0</div><p>Total Applications</p></div>
+      <div class="stat-card"><div id="pending-reviews-count">0</div><p>Pending Reviews</p></div>
+      <div class="stat-card"><div id="hired-candidates-count">0</div><p>Hired</p></div>
     </div>
   </div>
 
-  <!-- Filters and Actions -->
-  <div class="table-controls">
-    <div class="filters-left">
-      <select class="filter-select" id="team-filter">
-        <option>All Teams</option>
-        <option>Engineering</option>
-        <option>Marketing</option>
-        <option>Sales</option>
-      </select>
-      <select class="filter-select" id="location-filter">
-        <option>Location</option>
-        <option>Remote</option>
-        <option>New York</option>
-        <option>California</option>
-      </select>
-      <select class="filter-select" id="groups-filter">
-        <option>All Groups</option>
-        <option>Managers</option>
-        <option>Developers</option>
-      </select>
-      <select class="filter-select" id="filter-dropdown">
-        <option>All Filters</option>
-        <option>Active</option>
-        <option>Inactive</option>
-      </select>
-      <button class="filter-btn">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
-        </svg>
-        Filter
-      </button>
+  <!-- Tabs -->
+  <div class="content-sections">
+
+    <!-- JOBS TAB -->
+    <div id="jobs-content" class="content-section active">
+      <div class="section-header">
+        <h3>My Job Posts</h3>
+        <button class="btn btn-secondary" id="refresh-jobs">Refresh</button>
+      </div>
+
+      <div id="jobs-list" class="jobs-grid"></div>
+      <div id="jobs-empty" class="empty-state" style="margin-top:40px;">
+        <h3>No Jobs Posted</h3>
+        <button class="btn btn-primary" id="create-first-job">Post Your First Job</button>
+      </div>
     </div>
-    <div class="filters-right">
-      <button class="export-btn">Export</button>
-      <div class="search-box">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
-          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-        </svg>
-        <input type="text" placeholder="Search by name" id="name-search" />
+
+    <!-- APPLICATIONS TAB -->
+    <div id="applicants-content" class="content-section">
+      <div class="section-header">
+        <h3>Job Applications</h3>
+        <select id="job-filter" class="filter-select">
+          <option value="">All Jobs</option>
+        </select>
+      </div>
+      <div id="applicants-list"></div>
+      <div id="applicants-empty" class="empty-state">
+        <h3>No Applications</h3>
+      </div>
+    </div>
+
+    <!-- POST JOB TAB -->
+    <div id="post-content" class="content-section">
+      <div class="post-job-form-container">
+
+        <h3>Post New Job</h3>
+
+        <form id="job-post-form">
+          <input id="company-name" class="input" placeholder="Company Name *" required />
+          <input id="job-title" class="input" placeholder="Job Title *" required />
+          <input id="job-location" class="input" placeholder="Location" />
+
+          <textarea id="job-description" class="input textarea"
+            placeholder="Job Description *" required></textarea>
+
+          <input id="job-skills" class="input" placeholder="Skills (comma-separated)" />
+
+          <button type="submit" class="btn btn-primary fullwidth">Post Job</button>
+        </form>
+
       </div>
     </div>
   </div>
-
-  <!-- People Table -->
-  <div class="people-table-container">
-    <table class="people-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone Number</th>
-          <th>Location</th>
-          <th>Role</th>
-          <th>Type</th>
-          <th>Last Engaged On</th>
-          <th>Engagement Rate</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="people-table-body">
-        <!-- Sample data will be populated by JavaScript -->
-      </tbody>
-    </table>
-    
-    <!-- Empty State -->
-    <div id="people-empty" class="empty-state" style="display: none;">
-      <svg width="48" height="48" fill="#94A3B8" viewBox="0 0 24 24">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg>
-      <h3>No team members found</h3>
-      <p>Invite team members to get started with collaboration.</p>
-    </div>
-
-    <!-- Pagination -->
-    <div class="pagination">
-      <div class="pagination-info">1-10 of 150</div>
-      <div class="pagination-controls">
-        <button class="page-btn" disabled>‹</button>
-        <button class="page-btn active">1</button>
-        <button class="page-btn">2</button>
-        <button class="page-btn">3</button>
-        <button class="page-btn">...</button>
-        <button class="page-btn">15</button>
-        <button class="page-btn">›</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<!-- EDIT JOB MODAL -->
-<div id="edit-job-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
-  <div class="modal medium-modal">
+
+<!-- ============ QUICK POST JOB POPUP ============ -->
+<div id="quick-post-backdrop" class="modal-backdrop" style="display:none;">
+  <div class="modal small-modal">
+
     <div class="modal-head">
-      <div class="modal-title">Edit Job</div>
+      <h3>Quick Post Job</h3>
     </div>
 
-    <form id="edit-job-form" class="edit-job-form">
-      <input type="hidden" id="edit-job-id" />
+    <div class="modal-body">
+      <form id="quick-job-form">
 
-      <div class="grid cols-2">
-        <input id="edit-job-title" class="input" placeholder="Job Title" />
-        <input id="edit-job-location" class="input" placeholder="Location" />
-      </div>
+        <div class="form-group">
+          <label>Job Title *</label>
+          <input class="input" id="quick-job-title" required>
+        </div>
 
-      <textarea id="edit-job-desc" class="input" placeholder="Job Description"></textarea>
+        <div class="form-group">
+          <label>Job Description *</label>
+          <textarea class="input textarea" id="quick-job-description"
+            rows="5" required></textarea>
+        </div>
 
-      <input id="edit-job-skills" class="input" placeholder="Required Skills (comma-separated)" />
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="quick-job-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Post</button>
+        </div>
+      </form>
+    </div>
 
-      <div class="grid cols-2">
-        <input id="edit-job-salary" class="input" placeholder="Salary Range" />
-        <input id="edit-job-exp" class="input" placeholder="Required Experience" />
-      </div>
-
-      <button id="save-job-edits" type="submit" class="btn fullwidth mt-10">Save Changes</button>
-    </form>
   </div>
 </div>
 

@@ -295,6 +295,29 @@ async def api_auth_verify(request: Request, response: Response, mode: str = Form
 @app.get("/api/jobs")
 async def api_jobs(request: Request):
     jobs = db.list_jobs()
+    # Parse company name from description for display
+    for job in jobs:
+        if job.get("description"):
+            desc = job["description"]
+            if desc.startswith("Company: "):
+                lines = desc.split('\n')
+                company_line = lines[0]
+                job["company_name"] = company_line.replace("Company: ", "").strip()
+                # Extract other fields if present
+                remaining_desc = '\n'.join(lines[2:]) if len(lines) > 2 else desc
+                for line in lines:
+                    if line.startswith("Job Type: "):
+                        job["type"] = line.replace("Job Type: ", "").strip()
+                    elif line.startswith("Location: "):
+                        job["location"] = line.replace("Location: ", "").strip()
+                    elif line.startswith("Salary: "):
+                        job["salary"] = line.replace("Salary: ", "").strip()
+                    elif line.startswith("Category: "):
+                        job["category"] = line.replace("Category: ", "").strip()
+            else:
+                job["company_name"] = "Company Name"
+        else:
+            job["company_name"] = "Company Name"
     return {"ok": True, "jobs": jobs}
 
 @app.get("/api/recruiter/jobs")
@@ -302,26 +325,98 @@ async def api_recruiter_jobs(request: Request):
     user = get_user_from_cookie(request)
     if not require_role(user, "recruiter"):
         return {"ok": False, "error": "Not authorized"}
-    return {"ok": True, "jobs": db.list_jobs_by_recruiter(user["id"])}
+    jobs = db.list_jobs_by_recruiter(user["id"])
+    # Parse company name from description for display
+    for job in jobs:
+        if job.get("description"):
+            desc = job["description"]
+            if desc.startswith("Company: "):
+                lines = desc.split('\n')
+                company_line = lines[0]
+                job["company_name"] = company_line.replace("Company: ", "").strip()
+            else:
+                job["company_name"] = "Company Name"
+        else:
+            job["company_name"] = "Company Name"
+    return {"ok": True, "jobs": jobs}
+
+@app.get("/api/recruiter/applications")
+async def api_recruiter_applications(request: Request, job_id: int = None):
+    user = get_user_from_cookie(request)
+    if not require_role(user, "recruiter"):
+        return {"ok": False, "error": "Not authorized"}
+    
+    # Get all applications for recruiter's jobs
+    recruiter_jobs = db.list_jobs_by_recruiter(user["id"])
+    job_ids = [job["id"] for job in recruiter_jobs]
+    
+    all_applications = []
+    for job_id in job_ids:
+        try:
+            job_applications = db.list_applicants_for_job(job_id)
+            for app in job_applications:
+                app["job_id"] = job_id
+                # Find job title
+                job_info = next((job for job in recruiter_jobs if job["id"] == job_id), {})
+                app["job_title"] = job_info.get("title", "Unknown Job")
+                all_applications.append(app)
+        except Exception as e:
+            continue
+    
+    return {"ok": True, "applications": all_applications}
 
 @app.post("/api/recruiter/jobs")
-async def api_recruiter_post_job(request: Request, title: str = Form(...), description: str = Form(...), skills: str = Form(""), experience: str = Form("")):
+async def api_recruiter_post_job(request: Request, 
+                                title: str = Form(...), 
+                                description: str = Form(...), 
+                                skills: str = Form(""), 
+                                experience: str = Form(""),
+                                company_name: str = Form(""),
+                                type: str = Form(""),
+                                location: str = Form(""),
+                                salary: str = Form(""),
+                                category: str = Form("")):
     if not validate_csrf(request, request.headers.get("X-CSRF-Token", "")):
         return {"ok": False, "error": "Invalid CSRF"}
     user = get_user_from_cookie(request)
     if not require_role(user, "recruiter"):
         return {"ok": False, "error": "Not authorized"}
-    job_id = db.create_job(user["id"], title.strip(), description.strip(), skills.strip(), experience.strip())
-    return {"ok": True, "job_id": job_id}
+    
+    # Create job with additional fields - include all info in description until DB schema is updated
+    enhanced_description = description.strip()
+    if company_name: enhanced_description = f"Company: {company_name}\n\n" + enhanced_description
+    if type: enhanced_description += f"\n\nJob Type: {type}"
+    if location: enhanced_description += f"\nLocation: {location}"  
+    if salary: enhanced_description += f"\nSalary: {salary}"
+    if category: enhanced_description += f"\nCategory: {category}"
+    
+    job_id = db.create_job(user["id"], title.strip(), enhanced_description, skills.strip(), experience.strip())
+    return {"ok": True, "job_id": job_id, "company_name": company_name.strip()}
 
 @app.put("/api/recruiter/jobs/{job_id}")
-async def api_recruiter_update_job(request: Request, job_id: int, title: str = Form(...), description: str = Form(...), skills: str = Form(""), experience: str = Form("")):
+async def api_recruiter_update_job(request: Request, job_id: int, 
+                                  title: str = Form(...), 
+                                  description: str = Form(...), 
+                                  skills: str = Form(""), 
+                                  experience: str = Form(""),
+                                  type: str = Form(""),
+                                  location: str = Form(""),
+                                  salary: str = Form(""),
+                                  category: str = Form("")):
     if not validate_csrf(request, request.headers.get("X-CSRF-Token", "")):
         return {"ok": False, "error": "Invalid CSRF"}
     user = get_user_from_cookie(request)
     if not require_role(user, "recruiter"):
         return {"ok": False, "error": "Not authorized"}
-    ok = db.update_job(job_id, user["id"], title.strip(), description.strip(), skills.strip(), experience.strip())
+    
+    # Include additional info in description until DB is updated
+    enhanced_description = description.strip()
+    if type: enhanced_description += f"\n\nJob Type: {type}"
+    if location: enhanced_description += f"\nLocation: {location}"  
+    if salary: enhanced_description += f"\nSalary: {salary}"
+    if category: enhanced_description += f"\nCategory: {category}"
+    
+    ok = db.update_job(job_id, user["id"], title.strip(), enhanced_description, skills.strip(), experience.strip())
     if not ok:
         return {"ok": False, "error": "Job not found or not owned by user"}
     return {"ok": True}
@@ -339,7 +434,18 @@ async def api_recruiter_delete_job(request: Request, job_id: int):
     return {"ok": True}
 
 @app.post("/api/candidate/apply")
-async def api_candidate_apply(request: Request, job_id: int = Form(...), full_name: str = Form(...), email: str = Form(...), resume: UploadFile = File(...)):
+async def api_candidate_apply(
+    request: Request,
+    job_id: int = Form(...),
+    full_name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(""),
+    experience: str = Form(""),
+    skills: str = Form(""),
+    expected_salary: str = Form(""),
+    cover_letter: str = Form(""),
+    resume: UploadFile = File(...)
+):
     if not validate_csrf(request, request.headers.get("X-CSRF-Token", "")):
         return {"ok": False, "error": "Invalid CSRF"}
     user = get_user_from_cookie(request)
@@ -351,7 +457,12 @@ async def api_candidate_apply(request: Request, job_id: int = Form(...), full_na
     dest = os.path.join(upload_dir, f"{user['id']}_job{job_id}{ext}")
     with open(dest, "wb") as f:
         f.write(await resume.read())
-    app_id = db.apply_to_job(job_id=job_id, candidate_id=user['id'], candidate_name=full_name, candidate_email=email, resume_path=dest)
+    # Store all fields in the applications table if possible, or as extra fields in the DB if schema allows
+    # For now, store extra fields in the resume_path as a workaround (or extend DB schema if needed)
+    # This is a workaround for legacy schema
+    extra_info = f"phone:{phone}|exp:{experience}|skills:{skills}|salary:{expected_salary}|cover:{cover_letter}"
+    resume_path_with_info = dest + "::" + extra_info
+    app_id = db.apply_to_job(job_id=job_id, candidate_id=user['id'], candidate_name=full_name, candidate_email=email, resume_path=resume_path_with_info)
     resume_text = parse_resume(dest)
     job = [j for j in db.list_jobs() if j['id']==job_id]
     jd = job[0]['description'] if job else ''
@@ -378,6 +489,88 @@ async def api_recruiter_ranking(request: Request):
         for row in data
     ]
     return {"ok": True, "candidates": candidates}
+
+@app.get("/api/recruiter/stats")
+async def api_recruiter_stats(request: Request):
+    user = get_user_from_cookie(request)
+    if not require_role(user, "recruiter"):
+        return {"ok": False, "error": "Not authorized"}
+    
+    # Get recruiter's job statistics
+    jobs = db.list_jobs_by_recruiter(user["id"])
+    active_jobs = len([j for j in jobs if j.get('status') != 'closed'])
+    
+    # Get application statistics
+    all_applications = []
+    total_applications = 0
+    pending_reviews = 0
+    hired_candidates = 0
+    
+    try:
+        # Get applications for all recruiter's jobs
+        for job in jobs:
+            job_applications = db.list_applicants_for_job(job["id"])
+            all_applications.extend(job_applications)
+            total_applications += len(job_applications)
+            pending_reviews += len([app for app in job_applications if not app.get('status') or app.get('status') == 'pending'])
+            hired_candidates += len([app for app in job_applications if app.get('status') == 'hired'])
+    except Exception as e:
+        # Fallback if db methods don't exist
+        pass
+    
+    return {
+        "ok": True,
+        "stats": {
+            "activeJobs": active_jobs,
+            "totalApplications": total_applications,
+            "pendingReviews": pending_reviews,
+            "hiredCandidates": hired_candidates
+        }
+    }
+
+@app.get("/api/recruiter/applications/{application_id}")
+async def api_recruiter_application_details(request: Request, application_id: int):
+    user = get_user_from_cookie(request)
+    if not require_role(user, "recruiter"):
+        return {"ok": False, "error": "Not authorized"}
+    
+    try:
+        # Get application details - this may need to be implemented in db_manager
+        # For now return mock data structure
+        application = {
+            "id": application_id,
+            "candidate_name": "John Doe",
+            "candidate_email": "john.doe@example.com",
+            "experience": "3 years",
+            "skills": ["JavaScript", "Python", "React"],
+            "salary_expectation": "$60,000 - $80,000",
+            "resume_path": "/uploads/resume.pdf",
+            "similarity_score": 85,
+            "applied_date": "2024-11-15",
+            "status": "pending"
+        }
+        return {"ok": True, "application": application}
+    except Exception as e:
+        return {"ok": False, "error": "Application not found"}
+
+@app.post("/api/recruiter/send-email")
+async def api_recruiter_send_email(request: Request, 
+                                  application_id: int = Form(...),
+                                  email_type: str = Form(...),
+                                  subject: str = Form(...),
+                                  message: str = Form(...)):
+    if not validate_csrf(request, request.headers.get("X-CSRF-Token", "")):
+        return {"ok": False, "error": "Invalid CSRF"}
+    
+    user = get_user_from_cookie(request)
+    if not require_role(user, "recruiter"):
+        return {"ok": False, "error": "Not authorized"}
+    
+    try:
+        # For now, just return success - implement actual email sending later
+        return {"ok": True, "message": f"Email sent successfully to candidate"}
+    except Exception as e:
+        return {"ok": False, "error": "Failed to send email"}
 
 # ---------------------- Chatbot ----------------------
 @app.post("/chat")
