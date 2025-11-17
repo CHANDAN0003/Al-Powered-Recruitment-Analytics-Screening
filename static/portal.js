@@ -422,6 +422,58 @@
   // expose globally
   window.chatbotAsk = chatbotAsk;
 
+  // Initialize chat UI controls (send button, enter key, toggle)
+  function initChatUI() {
+    const sendBtn = $('#chat_send');
+    const input = $('#chat_prompt');
+    const chatBox = $('#chat_box');
+    const toggle = $('#chat-toggle');
+    const chatWrap = $('#candidate-chat');
+
+    if (!sendBtn || !input || !chatBox) return;
+
+    sendBtn.addEventListener('click', () => {
+      // reuse existing chatbotAsk which appends messages and performs fetch
+      chatbotAsk();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatbotAsk();
+      }
+    });
+
+    if (toggle && chatWrap) {
+      toggle.addEventListener('click', () => {
+        const isHidden = chatWrap.style.display === 'none' || chatWrap.getAttribute('aria-hidden') === 'true';
+        if (isHidden) {
+          chatWrap.style.display = 'flex';
+          chatWrap.setAttribute('aria-hidden', 'false');
+        } else {
+          chatWrap.style.display = 'none';
+          chatWrap.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+  }
+
+  // Expose lightweight helpers and commonly-used functions to global scope so
+  // templates that use inline handlers (e.g. onclick="hideBackdrop($('#id')") )
+  // continue to work. This avoids runtime errors when `$`/`hideBackdrop` are
+  // referenced from HTML before the IIFE scope is available.
+  window.$ = (sel, root = document) => root.querySelector(sel);
+  window.$$ = (sel, root = document) => Array.from((root || document).querySelectorAll(sel));
+  window.showBackdrop = showBackdrop;
+  window.hideBackdrop = hideBackdrop;
+  // Expose recruiter related functions which templates may call directly
+  window.showApplicationDetails = showApplicationDetails;
+  window.showEmailModal = showEmailModal;
+  window.sendConfirmationEmail = sendConfirmationEmail;
+  window.loadRecruiterJobs = loadRecruiterJobs;
+  window.loadApplications = loadApplications;
+  window.submitJobPost = submitJobPost;
+
   // ---------- Candidate Dashboard ----------
   function applyJobFilters(jobs) {
     const q = ($('#job-search')?.value || '').toLowerCase();
@@ -1006,13 +1058,24 @@
     try {
       const response = await fetch(url);
       const data = await response.json();
-      
       if (data.ok && data.applications && data.applications.length > 0) {
         applicantsEmpty.style.display = 'none';
         applicantsList.style.display = 'block';
-        
         applicantsList.innerHTML = data.applications.map(app => {
           const initials = app.candidate_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'NA';
+          // Show match percent, robustly handle fraction (0-1) or percent (0-100)
+          let rawScore = Number(app.similarity_score);
+          if (!isFinite(rawScore) || isNaN(rawScore)) rawScore = 0;
+          let matchPercent = 0;
+          if (rawScore > 1) {
+            // assume already percent (e.g., 85)
+            matchPercent = Math.round(rawScore);
+          } else {
+            // fraction between 0 and 1
+            matchPercent = Math.round(rawScore * 100);
+          }
+          // Clamp to 0-100
+          matchPercent = Math.max(0, Math.min(100, matchPercent));
           return `
             <div class="application-card" data-application-id="${app.id}">
               <div class="application-header">
@@ -1025,7 +1088,7 @@
                   </div>
                 </div>
                 <div class="similarity-badge">
-                  ${Math.round(app.similarity_score * 100)}% Match
+                  ${matchPercent}% Match
                 </div>
               </div>
               <div class="application-meta">
@@ -1034,42 +1097,53 @@
                 <span>Expected Salary: ${app.expected_salary || 'Not specified'}</span>
               </div>
               <div class="application-actions">
-                <button class="btn btn-primary view-details" data-application-id="${app.id}">
-                  View Details
-                </button>
-                <button class="btn btn-success quick-accept" data-application-id="${app.id}">
-                  Accept
-                </button>
-                <button class="btn btn-danger quick-reject" data-application-id="${app.id}">
-                  Reject
-                </button>
+                  <button class="btn btn-primary view-details" data-application-id="${app.id}" data-resume-path="${app.resume_path || ''}">View Details</button>
+                  <button class="btn btn-success quick-accept" data-application-id="${app.id}">Accept</button>
               </div>
             </div>
           `;
         }).join('');
 
-        // Add event listeners
-        $$('.view-details').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const appId = btn.getAttribute('data-application-id');
-            showApplicationDetails(appId);
-          });
+        // Delegate click handling for view-details and accept buttons (more reliable)
+        applicantsList.addEventListener('click', async (ev) => {
+          const viewBtn = ev.target.closest('.view-details');
+          if (viewBtn) {
+            const appId = viewBtn.getAttribute('data-application-id');
+            if (appId) showApplicationDetails(appId);
+            return;
+          }
+          const acceptBtn = ev.target.closest('.quick-accept');
+          if (acceptBtn) {
+            const appId = acceptBtn.getAttribute('data-application-id');
+            if (!appId) return;
+            // Call backend to send email
+            const formData = new FormData();
+            formData.append('application_id', appId);
+            formData.append('email_type', 'accept');
+            formData.append('subject', 'Congratulations! Your application has been accepted');
+            formData.append('message', 'We are pleased to inform you that your application has been accepted. Welcome to the team!');
+            try {
+              const resp = await fetch('/api/recruiter/send-email', {
+                method: 'POST',
+                headers: csrfHeaders(),
+                body: formData
+              });
+              const data = await resp.json();
+              if (data.ok) {
+                createToast('Confirmation email sent!', 'success');
+                // Optionally reload applications to reflect status
+                loadApplications();
+                loadRecruiterJobs();
+              } else {
+                createToast(data.error || 'Failed to send email', 'error');
+              }
+            } catch (e) {
+              createToast('Network error while sending email', 'error');
+            }
+          }
         });
 
-        $$('.quick-accept').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const appId = btn.getAttribute('data-application-id');
-            showEmailModal('accept', appId);
-          });
-        });
-
-        $$('.quick-reject').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const appId = btn.getAttribute('data-application-id');
-            showEmailModal('reject', appId);
-          });
-        });
-
+        // ...existing code...
       } else {
         applicantsEmpty.style.display = 'block';
         applicantsList.style.display = 'none';
@@ -1146,9 +1220,13 @@
         $('#candidate-avatar').textContent = initials;
         $('#candidate-name').textContent = app.candidate_name;
         $('#candidate-email').textContent = app.candidate_email;
-        $('#candidate-experience').textContent = `${app.experience || 0} years experience`;
-        $('#similarity-percentage').textContent = `${Math.round(app.similarity_score * 100)}%`;
-        $('#candidate-salary').textContent = app.expected_salary || 'Not specified';
+        // Experience can be a string or number
+        $('#candidate-experience').textContent = app.experience ? (typeof app.experience === 'string' ? app.experience : `${app.experience} years experience`) : 'Not specified';
+        // similarity_score may be a fraction (0-1) or already percent (0-100)
+        const rawScore = Number(app.similarity_score) || 0;
+        const matchPercent = rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100);
+        $('#similarity-percentage').textContent = `${matchPercent}%`;
+        $('#candidate-salary').textContent = app.expected_salary || app.salary_expectation || 'Not specified';
         
         // Populate skills
         const skillsContainer = $('#candidate-skills');
@@ -1159,8 +1237,13 @@
         }
         
         // Set up resume link
-        if (app.resume_url) {
-          $('#resume-link').href = app.resume_url;
+        // Support resume_url or resume_path from backend
+        const resumePath = app.resume_url || app.resume_path || app.resume;
+        if (resumePath) {
+          // If resumePath looks like a filesystem path, extract filename
+          let fileName = resumePath.split('::')[0].split('/').pop();
+          // Create download url
+          $('#resume-link').href = `/static/../uploads/${fileName}`;
           $('#resume-link').style.display = 'inline-flex';
         } else {
           $('#resume-link').style.display = 'none';
@@ -1169,7 +1252,6 @@
         // Add action button listeners
         $('#send-accept-email').onclick = () => showEmailModal('accept', applicationId);
         $('#send-interview-email').onclick = () => showEmailModal('interview', applicationId);
-        $('#send-reject-email').onclick = () => showEmailModal('reject', applicationId);
         
         showBackdrop($('#application-details-backdrop'));
       }
@@ -1182,20 +1264,17 @@
     const backdrop = $('#email-confirmation-backdrop');
     const titleMap = {
       'accept': 'Send Acceptance Email',
-      'interview': 'Schedule Interview Email', 
-      'reject': 'Send Rejection Email'
+      'interview': 'Schedule Interview Email'
     };
     
     const subjectMap = {
       'accept': 'Congratulations! Your application has been accepted',
-      'interview': 'Interview Invitation',
-      'reject': 'Update on your application'
+      'interview': 'Interview Invitation'
     };
     
     const messageMap = {
       'accept': 'We are pleased to inform you that your application has been accepted. Welcome to the team!',
-      'interview': 'We would like to invite you for an interview. Please let us know your availability.',
-      'reject': 'Thank you for your interest. While your qualifications are impressive, we have decided to move forward with other candidates.'
+      'interview': 'We would like to invite you for an interview. Please let us know your availability.'
     };
     
     $('#email-modal-title').textContent = titleMap[type];
@@ -1372,6 +1451,8 @@
     initRecruiterDashboard();
     initQuickJobPost();
     initSidebar();
+    // Chat UI should be initialized after candidate dashboard markup is available
+    initChatUI();
   }
 
   if (document.readyState === 'loading') {

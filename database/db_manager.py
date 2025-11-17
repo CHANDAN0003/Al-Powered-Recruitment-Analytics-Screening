@@ -1,3 +1,10 @@
+class DBManager:
+    def __init__(self):
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        self.conn = get_conn()
+        self.init_db()
+
+    # ...existing code...
 import os
 import sqlite3
 from datetime import datetime, timedelta
@@ -208,3 +215,23 @@ class DBManager:
         )
         rows = cur.fetchall()
         return [dict(r) for r in rows]
+
+    def get_application_by_id(self, application_id: int) -> Optional[Dict[str, Any]]:
+        cur = self.conn.cursor()
+        cur.execute(
+            '''
+            SELECT a.*, j.title as job_title, j.recruiter_id as recruiter_id
+            FROM applications a
+            JOIN jobs j ON j.id = a.job_id
+            WHERE a.id = ?
+            ''',
+            (application_id,)
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+    def update_application_status(self, application_id: int, status: str) -> bool:
+        cur = self.conn.cursor()
+        cur.execute('UPDATE applications SET status = ? WHERE id = ?', (status, application_id))
+        self.conn.commit()
+        return cur.rowcount > 0

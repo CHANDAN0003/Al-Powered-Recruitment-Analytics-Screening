@@ -25,6 +25,31 @@
   </div>
 </div>
 
+<!-- CHATBOT SIDEBAR (Candidate) -->
+<div id="candidate-chat" class="chat-sidebar" aria-hidden="false" style="position:fixed;right:18px;bottom:18px;width:320px;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,0.08);border-radius:8px;background:#fff;overflow:hidden;z-index:1200;">
+  <div class="chat-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #eee;background:var(--card);">
+    <strong style="font-size:14px">Career Assistant</strong>
+    <button id="chat-toggle" class="btn btn-ghost" title="Close chat" style="font-size:18px;line-height:1">×</button>
+  </div>
+
+  <div id="chat_box" class="chat-box" style="flex:1;overflow:auto;padding:12px;gap:8px;display:flex;flex-direction:column;">
+    <!-- messages inserted here -->
+    <div class="msg bot" style="opacity:0.9;font-size:13px;color:#064E3B">Hi — ask me about jobs, how to improve your resume, interview tips, or the suitability score.</div>
+  </div>
+
+  <form id="chat_form" style="display:flex;padding:10px;border-top:1px solid #eee;gap:8px;align-items:center;">
+    <input id="chat_prompt" placeholder="Ask the assistant..." class="input" style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid #e5e7eb;" />
+    <button type="button" id="chat_send" class="btn btn-primary">Send</button>
+  </form>
+</div>
+
+<style>
+  /* Minimal chat message styles */
+  .chat-box .msg{padding:8px 10px;border-radius:8px;max-width:88%;}
+  .chat-box .msg.bot{background:#ECFDF5;color:#064E3B;align-self:flex-start}
+  .chat-box .msg.you{background:#EEF2FF;color:#3730A3;align-self:flex-end}
+</style>
+
 <!-- APPLY MODAL -->
 <div id="apply-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
   <div class="modal medium-modal">

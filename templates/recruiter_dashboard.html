@@ -2,11 +2,14 @@
 
 {% block content %}
 
-<!-- ============ RECRUITER DASHBOARD ============ -->
+<!-- ========================================= -->
+<!--           RECRUITER DASHBOARD             -->
+<!-- ========================================= -->
 <div class="recruiter-dashboard">
 
-  <!-- Header -->
+  <!-- ============ HEADER ============ -->
   <div class="dashboard-header">
+
     <div class="header-left">
       <h1 class="page-title">Recruiter Dashboard</h1>
 
@@ -17,28 +20,97 @@
       </div>
     </div>
 
-    <div class="header-right">
-      <button class="btn btn-primary" id="quick-post-job">
-        + Quick Post Job
-      </button>
-    </div>
-  </div>
+    <!-- ========================================= -->
+    <!--        APPLICATION DETAILS MODAL           -->
+    <!-- ========================================= -->
+    <div id="application-details-backdrop" class="modal-backdrop" style="display:none;">
+      <div class="modal large-modal">
 
-  <!-- Overview -->
-  <div class="overview-section">
-    <h2 class="section-title">Overview</h2>
-    <div class="stats-grid">
-      <div class="stat-card"><div id="active-jobs-count">0</div><p>Active Jobs</p></div>
-      <div class="stat-card"><div id="total-applications-count">0</div><p>Total Applications</p></div>
-      <div class="stat-card"><div id="pending-reviews-count">0</div><p>Pending Reviews</p></div>
-      <div class="stat-card"><div id="hired-candidates-count">0</div><p>Hired</p></div>
-    </div>
-  </div>
+        <div class="modal-head">
+          <h3>Application Details</h3>
+          <button class="modal-close" onclick="hideBackdrop($('#application-details-backdrop'))">×</button>
+        </div>
 
-  <!-- Tabs -->
+        <div class="modal-body">
+
+          <!-- Candidate Header -->
+          <div class="applicant-header">
+            <div id="candidate-avatar" class="applicant-avatar">NA</div>
+
+            <div class="applicant-main">
+              <h4 id="candidate-name">Candidate Name</h4>
+              <p id="candidate-email">candidate@example.com</p>
+              <p id="candidate-experience">Experience</p>
+            </div>
+
+            <div class="similarity-pill" id="similarity-percentage">0% Match</div>
+          </div>
+
+          <!-- Meta -->
+          <div class="application-meta">
+            <p><strong>Expected Salary:</strong> <span id="candidate-salary">Not specified</span></p>
+            <p><strong>Skills:</strong> <span id="candidate-skills"></span></p>
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-actions">
+            <a id="resume-link" class="btn btn-secondary" style="display:none;" target="_blank">Download Resume</a>
+            <button id="send-accept-email" class="btn btn-success">Accept</button>
+            <button id="send-interview-email" class="btn btn-primary">Schedule Interview</button>
+            <button class="btn btn-secondary" onclick="hideBackdrop($('#application-details-backdrop'))">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!--         EMAIL CONFIRMATION MODAL          -->
+    <!-- ========================================= -->
+    <div id="email-confirmation-backdrop" class="modal-backdrop" style="display:none;">
+      <div class="modal small-modal">
+
+        <div class="modal-head">
+          <h3 id="email-modal-title">Send Email</h3>
+          <button class="modal-close" onclick="hideBackdrop($('#email-confirmation-backdrop'))">×</button>
+        </div>
+
+        <div class="modal-body">
+          <form id="email-form">
+
+            <input type="hidden" id="email-application-id" />
+            <input type="hidden" id="email-type" />
+
+            <div class="form-group">
+              <label>Subject</label>
+              <input id="email-subject" class="input" required />
+            </div>
+
+            <div class="form-group">
+              <label>Message</label>
+              <textarea id="email-message" class="input textarea" rows="6" required></textarea>
+            </div>
+
+            <div class="btn-row">
+              <button type="button" id="cancel-email" class="btn btn-secondary">Cancel</button>
+              <button type="submit" id="send-email-btn" class="btn btn-primary">Send</button>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </div> <!-- END HEADER -->
+
+
+  <!-- ========================================= -->
+  <!--               TABS CONTENT                -->
+  <!-- ========================================= -->
   <div class="content-sections">
 
-    <!-- JOBS TAB -->
+    <!-- ============ JOBS TAB ============ -->
     <div id="jobs-content" class="content-section active">
       <div class="section-header">
         <h3>My Job Posts</h3>
@@ -46,28 +118,35 @@
       </div>
 
       <div id="jobs-list" class="jobs-grid"></div>
+
       <div id="jobs-empty" class="empty-state" style="margin-top:40px;">
         <h3>No Jobs Posted</h3>
         <button class="btn btn-primary" id="create-first-job">Post Your First Job</button>
       </div>
     </div>
 
-    <!-- APPLICATIONS TAB -->
+    <!-- ============ APPLICATIONS TAB ============ -->
     <div id="applicants-content" class="content-section">
+
       <div class="section-header">
         <h3>Job Applications</h3>
+
         <select id="job-filter" class="filter-select">
           <option value="">All Jobs</option>
         </select>
       </div>
+
       <div id="applicants-list"></div>
+
       <div id="applicants-empty" class="empty-state">
         <h3>No Applications</h3>
       </div>
+
     </div>
 
-    <!-- POST JOB TAB -->
+    <!-- ============ POST JOB TAB ============ -->
     <div id="post-content" class="content-section">
+
       <div class="post-job-form-container">
 
         <h3>Post New Job</h3>
@@ -76,51 +155,16 @@
           <input id="company-name" class="input" placeholder="Company Name *" required />
           <input id="job-title" class="input" placeholder="Job Title *" required />
           <input id="job-location" class="input" placeholder="Location" />
-
-          <textarea id="job-description" class="input textarea"
-            placeholder="Job Description *" required></textarea>
-
+          <textarea id="job-description" class="input textarea" placeholder="Job Description *" required></textarea>
           <input id="job-skills" class="input" placeholder="Skills (comma-separated)" />
-
           <button type="submit" class="btn btn-primary fullwidth">Post Job</button>
         </form>
 
       </div>
-    </div>
-  </div>
-</div>
 
-
-<!-- ============ QUICK POST JOB POPUP ============ -->
-<div id="quick-post-backdrop" class="modal-backdrop" style="display:none;">
-  <div class="modal small-modal">
-
-    <div class="modal-head">
-      <h3>Quick Post Job</h3>
     </div>
 
-    <div class="modal-body">
-      <form id="quick-job-form">
-
-        <div class="form-group">
-          <label>Job Title *</label>
-          <input class="input" id="quick-job-title" required>
-        </div>
-
-        <div class="form-group">
-          <label>Job Description *</label>
-          <textarea class="input textarea" id="quick-job-description"
-            rows="5" required></textarea>
-        </div>
-
-        <div class="btn-row">
-          <button type="button" class="btn btn-secondary" id="quick-job-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary">Post</button>
-        </div>
-      </form>
-    </div>
-
-  </div>
+  </div> <!-- END CONTENT -->
 </div>
 
 {% endblock %}

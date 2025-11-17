@@ -1,5 +1,40 @@
 import os
 import secrets
+import asyncio
+from typing import Optional
+from fastapi import FastAPI, Request, Form, UploadFile, File, Depends, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from itsdangerous import URLSafeSerializer
+from dotenv import load_dotenv
+import openai
+
+from database.db_manager import DBManager
+from auth.login_manager import signup_start, signup_verify, login_start, login_verify, AuthError
+from auth.role_auth import require_role
+from utils.email_service import send_recruiter_message
+from utils.resume_parser import parse_resume
+from models.resume_matcher import matcher
+
+load_dotenv()
+
+SECRET = os.getenv("APP_SECRET", "dev-secret")
+serializer = URLSafeSerializer(SECRET, salt="session")
+
+# Configure OpenAI if provided
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+if OPENAI_KEY:
+    openai.api_key = OPENAI_KEY
+    OPENAI_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+else:
+    OPENAI_MODEL = None
+
+db = DBManager()
+
+    # ...existing code...
+import os
+import secrets
 from typing import Optional
 from fastapi import FastAPI, Request, Form, UploadFile, File, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
@@ -326,8 +361,9 @@ async def api_recruiter_jobs(request: Request):
     if not require_role(user, "recruiter"):
         return {"ok": False, "error": "Not authorized"}
     jobs = db.list_jobs_by_recruiter(user["id"])
-    # Parse company name from description for display
+    # Add application count for each job
     for job in jobs:
+        job["application_count"] = len(db.list_applicants_for_job(job["id"]))
         if job.get("description"):
             desc = job["description"]
             if desc.startswith("Company: "):
@@ -345,24 +381,26 @@ async def api_recruiter_applications(request: Request, job_id: int = None):
     user = get_user_from_cookie(request)
     if not require_role(user, "recruiter"):
         return {"ok": False, "error": "Not authorized"}
-    
-    # Get all applications for recruiter's jobs
     recruiter_jobs = db.list_jobs_by_recruiter(user["id"])
     job_ids = [job["id"] for job in recruiter_jobs]
-    
     all_applications = []
-    for job_id in job_ids:
+    for jid in job_ids:
         try:
-            job_applications = db.list_applicants_for_job(job_id)
+            job_applications = db.list_applicants_for_job(jid)
             for app in job_applications:
-                app["job_id"] = job_id
-                # Find job title
-                job_info = next((job for job in recruiter_jobs if job["id"] == job_id), {})
+                app["job_id"] = jid
+                job_info = next((job for job in recruiter_jobs if job["id"] == jid), {})
                 app["job_title"] = job_info.get("title", "Unknown Job")
+                # Parse similarity_score as float, fallback to 0.0
+                try:
+                    app["similarity_score"] = float(app.get("suitability_score", 0.0))
+                except Exception:
+                    app["similarity_score"] = 0.0
+                # Add resume_path for download
+                app["resume_path"] = app.get("resume_path", "")
                 all_applications.append(app)
         except Exception as e:
             continue
-    
     return {"ok": True, "applications": all_applications}
 
 @app.post("/api/recruiter/jobs")
@@ -554,23 +592,68 @@ async def api_recruiter_application_details(request: Request, application_id: in
         return {"ok": False, "error": "Application not found"}
 
 @app.post("/api/recruiter/send-email")
-async def api_recruiter_send_email(request: Request, 
-                                  application_id: int = Form(...),
-                                  email_type: str = Form(...),
-                                  subject: str = Form(...),
-                                  message: str = Form(...)):
-    if not validate_csrf(request, request.headers.get("X-CSRF-Token", "")):
-        return {"ok": False, "error": "Invalid CSRF"}
-    
-    user = get_user_from_cookie(request)
-    if not require_role(user, "recruiter"):
-        return {"ok": False, "error": "Not authorized"}
-    
+async def api_recruiter_send_email(request: Request):
+    # Read form data (support both 'email_type' and legacy 'type')
+    form = await request.form()
     try:
-        # For now, just return success - implement actual email sending later
-        return {"ok": True, "message": f"Email sent successfully to candidate"}
+        application_id = int(form.get('application_id') or form.get('applicationId') or 0)
+    except Exception:
+        return {"ok": False, "error": "Invalid application_id"}
+
+    email_type = form.get('email_type') or form.get('type') or form.get('emailType') or 'accept'
+    subject = form.get('subject') or ''
+    message = form.get('message') or ''
+
+    # CSRF validation: accept either header or cookie
+    if not validate_csrf(request, request.headers.get('X-CSRF-Token', '') or request.cookies.get('csrf', '')):
+        return {"ok": False, "error": "Invalid CSRF"}
+
+    user = get_user_from_cookie(request)
+    if not require_role(user, 'recruiter'):
+        return {"ok": False, "error": "Not authorized"}
+
+    # Fetch application and validate ownership
+    application = db.get_application_by_id(application_id)
+    if not application:
+        return {"ok": False, "error": "Application not found"}
+
+    # Ensure this recruiter owns the job
+    if application.get('recruiter_id') != user['id']:
+        return {"ok": False, "error": "Not authorized for this application"}
+
+    candidate_email = application.get('candidate_email')
+    candidate_name = application.get('candidate_name') or (candidate_email.split('@')[0] if candidate_email else 'Candidate')
+    job_title = application.get('job_title') or ''
+
+    # Use email service to send message
+    try:
+        # If subject/message not provided, choose defaults
+        if not subject:
+            if email_type == 'accept':
+                subject = f"Congratulations! Your application for {job_title} has been accepted"
+            elif email_type == 'interview':
+                subject = f"Interview Invitation for {job_title}"
+            else:
+                subject = f"Update regarding your application for {job_title}"
+
+        if not message:
+            if email_type == 'accept':
+                message = f"Hi {candidate_name},\n\nWe are pleased to inform you that your application for {job_title} has been accepted. Welcome aboard!"
+            elif email_type == 'interview':
+                message = f"Hi {candidate_name},\n\nWe would like to invite you for an interview for {job_title}. Please reply with your availability."
+            else:
+                message = f"Hi {candidate_name},\n\nThank you for applying to {job_title}. We will be in touch with updates."
+
+        # send_recruiter_message expects (email, candidate_name, message, job_title)
+        send_recruiter_message(candidate_email, candidate_name, message, job_title)
+
+        # If accepted, record status update
+        if email_type == 'accept':
+            db.update_application_status(application_id, 'accepted')
+
+        return {"ok": True, "message": "Email sent successfully"}
     except Exception as e:
-        return {"ok": False, "error": "Failed to send email"}
+        return {"ok": False, "error": f"Failed to send email: {str(e)}"}
 
 # ---------------------- Chatbot ----------------------
 @app.post("/chat")
@@ -578,8 +661,33 @@ async def chat_endpoint(request: Request, data: dict):
     prompt = data.get("prompt", "")
     jobs = db.list_jobs()
     ctx = '\n'.join([f"{j['title']} - Skills: {j.get('skills','')} - Exp: {j.get('experience','')} - JD: {j['description'][:250]}" for j in jobs])
-    answer = "No OpenAI API key configured" if not os.getenv("OPENAI_API_KEY") else f"[Mocked AI] Based on jobs: {prompt[:200]}"
-    return {"answer": answer}
+    # If OpenAI key configured, call the Chat API, otherwise return a helpful mocked response.
+    if OPENAI_MODEL:
+        try:
+            system_msg = os.getenv('OPENAI_SYSTEM_PROMPT', 'You are a helpful career assistant for job seekers. Give concise actionable advice.')
+
+            # Call OpenAI in a thread to avoid blocking the event loop
+            def call_openai():
+                messages = [
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": f"Context:\n{ctx}\n\nUser question:\n{prompt}"}
+                ]
+                resp = openai.ChatCompletion.create(model=OPENAI_MODEL, messages=messages, max_tokens=500, temperature=0.2)
+                # Extract text
+                return resp.choices[0].message.get('content', '').strip()
+
+            answer = await asyncio.to_thread(call_openai)
+            return {"answer": answer}
+        except Exception as e:
+            return {"answer": "Chat error: " + str(e)}
+    else:
+        # Helpful fallback when no key present
+        summary = ' | '.join([j['title'] for j in jobs[:6]])
+        fallback = (
+            "No OpenAI API key configured. Try setting OPENAI_API_KEY to enable the GPT-powered assistant.\n"
+            f"Jobs example: {summary}\nAsk about resume tips, interview prep, or what's a good match for a given JD. You asked: {prompt[:300]}"
+        )
+        return {"answer": fallback}
 
 # ---------------------- Dev convenience ----------------------
 @app.get("/health")
